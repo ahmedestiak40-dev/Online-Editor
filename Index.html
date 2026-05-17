@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WebForge | Live Online Code Editor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+      font-family: 'Segoe UI', 'Fira Code', 'Monaco', 'Cascadia Code', monospace;
+      height: 100vh;
+      overflow: hidden;
+      color: #e4f1ff;
+    }
+
+    /* MAIN LAYOUT */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* TOOLBAR */
+    .toolbar {
+      background: rgba(18, 25, 45, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(72, 187, 255, 0.25);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 1.6rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #b3f0ff, #3b82f6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 8px rgba(59,130,246,0.3);
+    }
+
+    .logo small {
+      font-size: 0.8rem;
+      background: none;
+      -webkit-background-clip: unset;
+      background-clip: unset;
+      color: #7f8ea3;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      background: #1e2a3e;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(72, 187, 255, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(95deg, #2563eb, #1e40af);
+      border-color: #60a5fa;
+      box-shadow: 0 2px 6px rgba(37,99,235,0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(95deg, #3b82f6, #2563eb);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(37,99,235,0.4);
+    }
+
+    .btn:hover {
+      background: #2d3b52;
+      border-color: #60a5fa;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    /* PANELS CONTAINER (resizable split) */
+    .editor-preview-container {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      gap: 0;
+      background: #0b0f18;
+      overflow: hidden;
+    }
+
+    /* EDITOR PANEL */
+    .editor-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0f1320;
+      border-right: 1px solid #1e2a3a;
+      min-width: 280px;
+      transition: all 0.1s;
+    }
+
+    .panel-header {
+      background: #111827;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #1f2a3e;
+      color: #9ab3d5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .language-badge {
+      background: #1e2a3a;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-family: monospace;
+    }
+
+    .code-area {
+      flex: 1;
+      width: 100%;
+      background: #0b0f1a;
+      border: none;
+      color: #e2e8f0;
+      font-family: 'Fira Code', 'Cascadia Code', 'Monaco', monospace;
+      font-size: 14px;
+      line-height: 1.55;
+      padding: 18px;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    .code-area:focus {
+      background: #0d1220;
+      box-shadow: inset 0 0 0 2px rgba(59,130,246,0.2);
+    }
+
+    /* PREVIEW PANEL */
+    .preview-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border-left: 1px solid #334155;
+      box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+    }
+
+    .preview-header {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .refresh-icon {
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: transform 0.2s;
+    }
+
+    .refresh-icon:hover {
+      transform: rotate(15deg);
+    }
+
+    iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: white;
+    }
+
+    /* status footer */
+    .status-bar {
+      background: #0a0e18;
+      border-top: 1px solid #1e2a3a;
+      padding: 6px 20px;
+      font-size: 0.7rem;
+      display: flex;
+      justify-content: space-between;
+      color: #7e8aa8;
+      font-family: monospace;
+    }
+
+    /* resize handle (simple draggable) */
+    .resize-handle {
+      width: 5px;
+      background: #1e2f44;
+      cursor: col-resize;
+      transition: background 0.2s;
+      position: relative;
+      z-index: 5;
+    }
+
+    .resize-handle:hover,
+    .resize-handle.active {
+      background: #3b82f6;
+    }
+
+    @media (max-width: 750px) {
+      .toolbar {
+        padding: 10px 16px;
+      }
+      .btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+      }
+      .logo {
+        font-size: 1.2rem;
+      }
+      .panel-header {
+        padding: 6px 12px;
+      }
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f1320;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2d3a55;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4b6e9e;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="toolbar">
+    <div class="logo">
+      WEBFORGE <small>· live code studio</small>
+    </div>
+    <div class="action-buttons">
+      <button class="btn" id="resetBtn">⟳ Reset Demo</button>
+      <button class="btn btn-primary" id="runBtn">▶ Run & Preview</button>
+    </div>
+  </div>
+
+  <div class="editor-preview-container" id="splitContainer">
+    <div class="editor-panel" id="editorPanel">
+      <div class="panel-header">
+        <span>✎ EDITOR (HTML / CSS / JS)</span>
+        <span class="language-badge">live code · triplex</span>
+      </div>
+      <textarea id="codeEditor" class="code-area" spellcheck="false"></textarea>
+    </div>
+    <div class="resize-handle" id="resizeHandle"></div>
+    <div class="preview-panel" id="previewPanel">
+      <div class="preview-header">
+        <span>🔍 PREVIEW</span>
+        <span class="refresh-icon" id="refreshPreview" title="refresh preview">↻</span>
+      </div>
+      <iframe id="previewFrame" title="live preview" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span>⚡ Live rendering | Type code → see changes instantly</span>
+    <span id="updateTimestamp">ready</span>
+  </div>
+</div>
+
+<script>
+  // ======================== DEFAULT DEMO CONTENT (rich interactive demo) ==================
+  const DEFAULT_CODE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Preview | WebForge Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+    }
+    .card {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 2rem;
+      padding: 2rem;
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.3s;
+      color: #f1f5f9;
+    }
+    h1 {
+      font-size: 2.2rem;
+      background: linear-gradient(to right, #a5f3fc, #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .badge {
+      background: #0f172acc;
+      display: inline-block;
+      padding: 0.25rem 1rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      margin-bottom: 1.2rem;
+      border-left: 3px solid #3b82f6;
+    }
+    button {
+      background: #3b82f6;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 60px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 1rem;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+      margin-top: 1rem;
+    }
+    button:hover {
+      background: #2563eb;
+      transform: scale(1.02);
+    }
+    .counter {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .value {
+      background: #02061780;
+      padding: 0.3rem 1.2rem;
+      border-radius: 60px;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+    .interactive-panel {
+      margin-top: 1.5rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 1.5rem;
+      padding: 1rem;
+    }
+    input {
+      background: #1e293b;
+      border: 1px solid #475569;
+      padding: 8px 15px;
+      border-radius: 60px;
+      color: white;
+      width: 180px;
+    }
+    .flex-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      text-align: center;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>⚡ WebForge Editor</h1>
+  <div class="badge">live preview • realtime code</div>
+  <p>Edit the code in the left panel — HTML, CSS, and JavaScript run instantly. Try the interactive demo below:</p>
+  
+  <div class="interactive-panel">
+    <h3>✨ Interactive Counter</h3>
+    <div class="counter">
+      <span>Count: </span>
+      <span class="value" id="counterValue">0</span>
+    </div>
+    <div class="flex-row">
+      <button id="incBtn">➕ Increment</button>
+      <button id="resetCounterBtn">🔄 Reset</button>
+    </div>
+  </div>
+
+  <div class="interactive-panel">
+    <h3>🎨 Type something</h3>
+    <div class="flex-row">
+      <input type="text" id="messageInput" placeholder="your message...">
+      <button id="showMsgBtn">Show Message</button>
+    </div>
+    <p id="dynamicMessage" style="margin-top: 0.8rem; font-style: italic;"></p>
+  </div>
+
+  <footer>★ Edit HTML/CSS/JS on the left → preview updates in realtime ★</footer>
+</div>
+
+<script>
+  // counter logic
+  let count = 0;
+  const counterSpan = document.getElementById('counterValue');
+  const incBtn = document.getElementById('incBtn');
+  const resetCounter = document.getElementById('resetCounterBtn');
+  
+  function updateCounterUI() {
+    if(counterSpan) counterSpan.innerText = count;
+  }
+  if(incBtn) {
+    incBtn.addEventListener('click', () => { count++; updateCounterUI(); });
+  }
+  if(resetCounter) {
+    resetCounter.addEventListener('click', () => { count = 0; updateCounterUI(); });
+  }
+  
+  // message feature
+  const msgInput = document.getElementById('messageInput');
+  const showBtn = document.getElementById('showMsgBtn');
+  const dynamicMsg = document.getElementById('dynamicMessage');
+  if(showBtn && msgInput && dynamicMsg) {
+    showBtn.addEventListener('click', () => {
+      const val = msgInput.value.trim();
+      if(val) dynamicMsg.innerText = '💬 ' + val;
+      else dynamicMsg.innerText = '✨ type something first!';
+    });
+  }
+<\/script>
+</body>
+</html>`;
+
+  // DOM elements
+  const textarea = document.getElementById('codeEditor');
+  const previewFrame = document.getElementById('previewFrame');
+  const runBtn = document.getElementById('runBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const refreshBtn = document.getElementById('refreshPreview');
+  const timestampSpan = document.getElementById('updateTimestamp');
+
+  // ========== LIVE PREVIEW RENDERING ==========
+  let renderTimeout = null;
+  let currentContent = '';
+
+  // Function to update iframe content from source code
+  function renderPreview(codeString) {
+    if (!previewFrame) return;
+    // Important: Write to srcdoc or use blob? srcdoc is safe and fast but large content. Use srcdoc.
+    // Sanitization is not needed as it's a sandboxed iframe and user writes code intentionally.
+    // But we need to handle potential infinite recursion? Not an issue.
+    try {
+      // using srcdoc for simplicity and security (sandbox already)
+      previewFrame.srcdoc = codeString;
+      const now = new Date();
+      timestampSpan.innerText = `last update: ${now.toLocaleTimeString()}`;
+    } catch (err) {
+      console.warn("Preview update error", err);
+      previewFrame.srcdoc = `<body style="background:#111;color:red;padding:2rem;">⚠️ Error rendering preview: ${err.message}</body>`;
+    }
+  }
+
+  // Debounced live rendering (when user types)
+  function scheduleRender() {
+    if (renderTimeout) clearTimeout(renderTimeout);
+    renderTimeout = setTimeout(() => {
+      const code = textarea.value;
+      currentContent = code;
+      renderPreview(code);
+    }, 180);
+  }
+
+  // immediate render (for run button or reset)
+  function immediateRender() {
+    if (renderTimeout) clearTimeout(renderTimeout);
+    const code = textarea.value;
+    currentContent = code;
+    renderPreview(code);
+  }
+
+  // Save to localStorage as draft
+  function saveToLocalStorage() {
+    try {
+      localStorage.setItem('webforge_editor_code', textarea.value);
+    } catch(e) {}
+  }
+
+  function loadFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem('webforge_editor_code');
+      if (saved && saved.trim().length > 0) {
+        textarea.value = saved;
+        return true;
+      }
+      return false;
+    } catch(e) { return false; }
+  }
+
+  // Reset to awesome demo, clear localStorage option (optional)
+  function resetToDefault() {
+    textarea.value = DEFAULT_CODE;
+    // optionally clear saved draft flag, but we'll also overwrite storage
+    saveToLocalStorage();
+    immediateRender();
+    timestampSpan.innerText = 'reset to default demo';
+    setTimeout(() => {
+      timestampSpan.innerText = `ready • auto-save active`;
+    }, 1500);
+  }
+
+  // ========== RESIZABLE PANELS (drag handle) ==========
+  const splitContainer = document.getElementById('splitContainer');
+  const editorPanel = document.getElementById('editorPanel');
+  const previewPanel = document.getElementById('previewPanel');
+  const resizeHandle = document.getElementById('resizeHandle');
+  let isResizing = false;
+  let startX = 0;
+  let startLeftWidth = 0;
+
+  function initResize() {
+    if (!resizeHandle || !editorPanel || !previewPanel) return;
+    resizeHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startLeftWidth = editorPanel.getBoundingClientRect().width;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      resizeHandle.classList.add('active');
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      const dx = e.clientX - startX;
+      const containerRect = splitContainer.getBoundingClientRect();
+      const minWidth = 260;
+      const maxWidth = containerRect.width - 260;
+      let newLeftWidth = startLeftWidth + dx;
+      newLeftWidth = Math.min(maxWidth, Math.max(minWidth, newLeftWidth));
+      const flexVal = (newLeftWidth / containerRect.width) * 100;
+      editorPanel.style.flex = `${flexVal} 1 0%`;
+      previewPanel.style.flex = `${100 - flexVal} 1 0%`;
+      // force layout update
+      e.preventDefault();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        resizeHandle.classList.remove('active');
+        // save width preference to localStorage
+        const leftPercent = editorPanel.getBoundingClientRect().width / splitContainer.getBoundingClientRect().width;
+        localStorage.setItem('webforge_editor_width_ratio', leftPercent);
+      }
+    });
+  }
+
+  function loadSavedPanelRatio() {
+    try {
+      const ratio = localStorage.getItem('webforge_editor_width_ratio');
+      if (ratio && !isNaN(parseFloat(ratio))) {
+        const percent = Math.min(0.85, Math.max(0.2, parseFloat(ratio))) * 100;
+        editorPanel.style.flex = `${percent} 1 0%`;
+        previewPanel.style.flex = `${100 - percent} 1 0%`;
+      } else {
+        // default equal flex
+        editorPanel.style.flex = `1 1 0%`;
+        previewPanel.style.flex = `1 1 0%`;
+      }
+    } catch(e) {}
+  }
+
+  // === Auto-save & load, live typing ===
+  function setupEditorEvents() {
+    textarea.addEventListener('input', () => {
+      scheduleRender();
+      saveToLocalStorage();
+    });
+    // run button triggers immediate without waiting
+    runBtn.addEventListener('click', () => {
+      immediateRender();
+      timestampSpan.innerText = `manual run at ${new Date().toLocaleTimeString()}`;
+    });
+    resetBtn.addEventListener('click', () => {
+      resetToDefault();
+    });
+    refreshBtn.addEventListener('click', () => {
+      immediateRender();
+      timestampSpan.innerText = `preview refreshed`;
+    });
+  }
+
+  // detect paste / large changes: schedule save and render
+  window.addEventListener('load', () => {
+    // Load stored code or default demo
+    const hasSaved = loadFromLocalStorage();
+    if (!hasSaved || textarea.value.trim() === "") {
+      textarea.value = DEFAULT_CODE;
+    }
+    // load panel ratio
+    loadSavedPanelRatio();
+    // initial render
+    immediateRender();
+    // setup events
+    setupEditorEvents();
+    initResize();
+    // also add window beforeunload to optionally notify but auto-save is on every change
+    window.addEventListener('beforeunload', () => {
+      saveToLocalStorage();
+    });
+    // extra focus update
+    timestampSpan.innerText = 'ready • auto-save on';
+  });
+  
+  // optional: iframe error handling - display friendly message
+  previewFrame.addEventListener('error', (e) => {
+    console.log("iframe error", e);
+  });
+  
+  // Additional safety: override console errors but no action needed
+  // ensures that after reset, focus remains clean
+</script>
+</body>
+</html>
